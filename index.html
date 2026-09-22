@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f6f5f1">
+  <title>SC09 Parking Map - KKU</title>
+  <script>
+    (()=>{try{const saved=localStorage.getItem('sc09_theme_v1');const theme=saved||((matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.dataset.theme=theme}catch{}})();
+  </script>
+  <style>@font-face{font-family:Prompt;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/prompt-thai-400-normal.woff2') format('woff2');unicode-range:U+0E00-0E7F,U+200C-200D,U+25CC;}
+@font-face{font-family:Prompt;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/prompt-latin-400-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2190-21FF;}
+@font-face{font-family:Prompt;font-style:normal;font-weight:500;font-display:swap;src:url('/fonts/prompt-thai-500-normal.woff2') format('woff2');unicode-range:U+0E00-0E7F,U+200C-200D,U+25CC;}
+@font-face{font-family:Prompt;font-style:normal;font-weight:500;font-display:swap;src:url('/fonts/prompt-latin-500-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2190-21FF;}
+@font-face{font-family:Prompt;font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/prompt-thai-600-normal.woff2') format('woff2');unicode-range:U+0E00-0E7F,U+200C-200D,U+25CC;}
+@font-face{font-family:Prompt;font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/prompt-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2190-21FF;}
+@font-face{font-family:Prompt;font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/prompt-thai-700-normal.woff2') format('woff2');unicode-range:U+0E00-0E7F,U+200C-200D,U+25CC;}
+@font-face{font-family:Prompt;font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/prompt-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2190-21FF;}
+
+    :root {
+      /* โทนสีสบายตา Soft Warm Palette */
+      --bg-page: #e8ecf1;
+      --bg-container: #f4f6f9;
+      --card-white: #ffffff;
+      --road-color: #dbe2e8;
+      --building-bg: #e2e8f0;
+      --building-border: #94a3b8;
+      
+      --text-main: #1e293b;
+      --text-sub: #64748b;
+      
+      /* ระบบ 4 สีสถานะ นุ่มตาแต่แยกชัดเจน */
+      --green-bg: #e6f7ef;
+      --green-border: #10b981;
+      --green-text: #047857;
+
+      --yellow-bg: #fefce8;
+      --yellow-border: #eab308;
+      --yellow-text: #854d0e;
+
+      --orange-bg: #fef3e2;
+      --orange-border: #f97316;
+      --orange-text: #c2410c;
+
+      --red-bg: #feebe8;
+      --red-border: #f43f5e;
+      --red-text: #be123c;
+
+      --primary: #3b82f6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Prompt', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      color: var(--text-main);
+    }
+
+    .app-wrapper {
+      width: 100%;
+      max-width: 440px;
+      background-color: var(--bg-container);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+      position: relative;
+      padding-bottom: 60px;
+    }
+
+    /* Header */
+    header {
+      padding: 16px 18px 12px;
+      background: var(--card-white);
+      border-bottom: 1px solid #e2e8f0;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      background: #eff6ff;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .brand h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .user-pill {
+      font-size: 0.72rem;
+      background: #f1f5f9;
+      color: #475569;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-weight: 500;
+      border: 1px solid #e2e8f0;
+      cursor: pointer;
+    }
+
+    /* Summary Bar */
+    .metric-container {
+      display: flex;
+      gap: 10px;
+      padding: 12px 18px;
+    }
+
+    .metric-card {
+      flex: 1;
+      background: var(--card-white);
+      padding: 8px 10px;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      border: 1px solid #eef2f6;
+    }
+
+    .metric-card .title {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      font-weight: 500;
+    }
+
+    .metric-card .val {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-top: 2px;
+      color: var(--text-main);
+    }
+
+    /* Map Surface */
+    .map-area {
+      padding: 0 16px 16px;
+      flex: 1;
+    }
+
+    .map-board {
+      position: relative;
+      width: 100%;
+      height: 590px;
+      background: #f8fafc;
+      border-radius: 20px;
+      border: 1.5px solid #e2e8f0;
+      overflow: hidden;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.02);
+    }
+
+    /* ถนน */
+    .road {
+      position: absolute;
+      background: var(--road-color);
+      z-index: 1;
+    }
+
+    /* ถนนฝั่งซ้ายตรงยาว ไม่มีข้อความ */
+    .road-west {
+      top: 0;
+      left: 0;
+      width: 26px;
+      height: 590px;
+    }
+
+    /* ถนนแนวตั้งขวา เชื่อมต่อทะลุถึงถนนด้านล่างแบบไร้รอยต่อ */
+    .road-v {
+      top: 0;
+      right: 90px;
+      width: 32px;
+      height: 550px;
+    }
+
+    /* ถนนแนวนอนด้านล่างเชื่อมต่อวงเวียนและถนนขวา */
+    .road-south-connect {
+      position: absolute;
+      top: 495px;
+      left: 0;
+      right: 0;
+      height: 55px;
+      background: var(--road-color);
+      z-index: 1;
+    }
+
+    /* วงเวียนใต้ Zone B */
+    .roundabout-box {
+      position: absolute;
+      top: 450px;
+      left: 80px;
+      width: 180px;
+      height: 105px;
+      background: var(--road-color);
+      border-radius: 50px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .roundabout-island {
+      width: 92px;
+      height: 48px;
+      background: #cbd5e1;
+      border-radius: 30px;
+      border: 2px dashed #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    /* ตึก SC09 */
+    .b-sc09 {
+      position: absolute;
+      top: 14px;
+      left: 88px;
+      width: 166px;
+      height: 64px;
+      background: var(--building-bg);
+      border: 1.5px solid var(--building-border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4px;
+      z-index: 4;
+    }
+
+    .b-sc09 .main-name {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #334155;
+    }
+    .b-sc09 .sub-name {
+      font-size: 0.62rem;
+      color: #64748b;
+    }
+
+    /* ลานจอดรถอาจารย์ */
+    .car-faculty-zone {
+      position: absolute;
+      top: 14px;
+      right: 10px;
+      width: 78px;
+      height: 90px;
+      background: repeating-linear-gradient(
+        -45deg,
+        #f1f5f9,
+        #f1f5f9 6px,
+        #e2e8f0 6px,
+        #e2e8f0 12px
+      );
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4px;
+      z-index: 4;
+    }
+
+    .car-faculty-zone span {
+      font-size: 0.62rem;
+      font-weight: 600;
+      color: #64748b;
+      line-height: 1.2;
+    }
+
+    /* ติ่งรั้วเข้ามอไซค์ */
+    .bike-gate-notch {
+      position: absolute;
+      top: 104px;
+      left: 252px;
+      width: 30px;
+      height: 38px;
+      background: #10b981;
+      border: 2px solid #ffffff;
+      border-radius: 0 8px 8px 0;
+      z-index: 6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.12);
+    }
+
+    .bike-gate-notch .icon { font-size: 0.85rem; line-height: 1; }
+    .bike-gate-notch .label { font-size: 0.5rem; font-weight: 700; color: #ffffff; margin-top: 2px; }
+
+    /* Parking Zones */
+    .zone-block {
+      position: absolute;
+      border-radius: 14px;
+      border: 2px solid transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 5;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.04);
+      user-select: none;
+    }
+
+    .zone-block:active { transform: scale(0.96); }
+    .zone-name { font-size: 0.85rem; font-weight: 700; }
+    .zone-remain { font-size: 0.72rem; font-weight: 600; margin-top: 2px; }
+
+    #zone-e { top: 14px; left: 32px; width: 50px; height: 64px; }
+    #zone-c { top: 90px; left: 32px; width: 50px; height: 350px; }
+    #zone-a { top: 90px; left: 88px; width: 166px; height: 155px; }
+    #zone-b { top: 257px; left: 88px; width: 166px; height: 185px; }
+    #zone-d { top: 115px; right: 10px; width: 78px; height: 360px; }
+
+    /* คลาสสีทั้ง 4 ระดับ */
+    .status-green { background: var(--green-bg); border-color: var(--green-border); color: var(--green-text); }
+    .status-yellow { background: var(--yellow-bg); border-color: var(--yellow-border); color: var(--yellow-text); }
+    .status-orange { background: var(--orange-bg); border-color: var(--orange-border); color: var(--orange-text); }
+    .status-red { background: var(--red-bg); border-color: var(--red-border); color: var(--red-text); }
+
+    /* กล่องคำอธิบายสี (Legend) มุมล่างซ้าย */
+    .map-legend {
+      position: absolute;
+      bottom: 12px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(4px);
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 10;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.62rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .legend-color {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      border: 1.5px solid transparent;
+    }
+
+    .lc-green { background: var(--green-bg); border-color: var(--green-border); }
+    .lc-yellow { background: var(--yellow-bg); border-color: var(--yellow-border); }
+    .lc-orange { background: var(--orange-bg); border-color: var(--orange-border); }
+    .lc-red { background: var(--red-bg); border-color: var(--red-border); }
+
+    /* Bottom Sheet */
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(3px);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .sheet-backdrop.active { opacity: 1; pointer-events: auto; }
+
+    .bottom-sheet {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translate(-50%, 100%);
+      width: 100%;
+      max-width: 440px;
+      background: #ffffff;
+      border-radius: 24px 24px 0 0;
+      padding: 20px 20px 28px;
+      z-index: 101;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 -8px 24px rgba(0,0,0,0.1);
+    }
+
+    .sheet-backdrop.active .bottom-sheet { transform: translate(-50%, 0); }
+    .sheet-drag { width: 36px; height: 4px; background: #cbd5e1; border-radius: 4px; margin: 0 auto 16px; }
+
+    .sheet-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .sheet-title { font-size: 1.2rem; font-weight: 700; color: var(--text-main); }
+    .sheet-pill { font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: #f1f5f9;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 8px 0 16px;
+    }
+    .progress-fill { height: 100%; width: 0%; transition: width 0.3s; }
+
+    .time-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .btn-time-opt {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      padding: 10px 4px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .btn-time-opt.active { background: #eff6ff; border-color: var(--primary); color: var(--primary); }
+
+    .btn-submit {
+      width: 100%;
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      padding: 14px;
+      border-radius: 14px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+    }
+
+    .dock-badge {
+      position: fixed;
+      bottom: 18px;
+      right: 20px;
+      background: #1e293b;
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 30px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.25);
+      z-index: 50;
+      cursor: pointer;
+    }
+
+    .dock-badge .pulse-circle {
+      width: 9px;
+      height: 9px;
+      background: #10b981;
+      border-radius: 50%;
+      animation: blink 1.4s infinite;
+    }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  
+body{background:#e9e8e3}.app-wrapper{max-width:480px;background:#f6f5f1;padding-bottom:108px}header{position:relative;background:#f6f5f1;border:0;padding-top:24px}.brand-icon{background:#e1eee7}.brand h1{letter-spacing:-.5px}.user-pill{max-width:145px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.intro{padding:12px 20px 0}.eyebrow{font-size:10px;letter-spacing:2px;color:#637669;font-weight:600}.intro h2{font-size:24px;margin:6px 0}.intro p{font-size:12px;color:#64748b;line-height:1.8}.demo-note{margin:14px 18px 0;padding:8px 12px;border:1px solid #dedfd5;border-radius:9px;font-size:10px;color:#727768;background:#eeeee7}.metric-card{box-shadow:none;border:1px solid #e7e6df}.map-heading{display:flex;justify-content:space-between;align-items:center;padding:5px 2px 12px;font-size:12px;font-weight:600}.map-heading small{font-weight:400;color:#64748b;font-size:10px}.map-board{height:auto;aspect-ratio:408/590;background:#fafbf9}.road-west{width:6.37%;height:100%}.road-v{right:22.06%;width:7.84%;height:93.22%}.road-south-connect{top:83.9%;height:9.32%}.roundabout-box{top:76.27%;left:19.61%;width:44.12%;height:17.8%}.roundabout-island{width:51%;height:46%}.b-sc09{top:2.37%;left:21.57%;width:40.69%;height:10.85%}.car-faculty-zone{top:2.37%;right:2.45%;width:19.12%;height:15.25%}.bike-gate-notch{top:17.63%;left:61.76%;width:7.35%;height:6.44%}#zone-e{top:2.37%;left:7.84%;width:12.25%;height:10.85%}#zone-c{top:15.25%;left:7.84%;width:12.25%;height:59.32%}#zone-a{top:15.25%;left:21.57%;width:40.69%;height:26.27%}#zone-b{top:43.56%;left:21.57%;width:40.69%;height:31.36%}#zone-d{top:19.49%;right:2.45%;width:19.12%;height:61.02%}.zone-block{font-family:inherit}.zone-block.selected{outline:3px solid #334b41;outline-offset:3px;box-shadow:0 5px 16px #334b4120}.zone-name{font-size:13px}.zone-remain{font-size:11px}.zone-label{font-size:10px;margin-top:5px}.map-legend{gap:3px;padding:6px}.legend-row{font-size:9px}.map-foot{font-size:10px;color:#7b827b;padding:10px 2px;line-height:1.7}.bottom-sheet{max-width:480px;padding-bottom:max(24px,env(safe-area-inset-bottom));max-height:90dvh;overflow:auto}.btn-submit{background:#285c47;box-shadow:none}.btn-submit:disabled{background:#a2aaa4;cursor:not-allowed}.btn-time-opt.active{background:#e6f2eb;border-color:#285c47;color:#285c47}.dock-badge{left:50%;right:auto;transform:translateX(-50%);width:calc(100% - 32px);max-width:444px;bottom:16px;border-radius:16px;background:#233e32;padding:14px 16px;justify-content:space-between}.dock-badge small{display:block;font-size:10px;color:#c5dace;margin-bottom:3px}.dock-badge span{font-size:13px}.close-btn{border:0;background:#f1f3f0;border-radius:50%;width:32px;height:32px;font-size:20px}.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#233e32;color:white;padding:12px 18px;border-radius:12px;z-index:200;font-size:12px;max-width:90%;box-shadow:0 4px 20px #0002}.qr-demo{padding:12px 16px;margin:0 16px;border:1px dashed #c9d0c8;border-radius:12px;font-size:11px;color:#68786c}.qr-demo a{display:inline-block;color:#285c47;margin:7px 13px 0 0;font-weight:600}.confirm-note{font-size:11px;color:#64748b;line-height:1.8;margin-bottom:14px}button:focus-visible,a:focus-visible{outline:3px solid #2563eb;outline-offset:3px}@media(max-width:360px){.zone-remain{font-size:9px}.zone-name{font-size:11px}.b-sc09 .main-name{font-size:10px}.b-sc09 .sub-name{font-size:8px}.user-pill{max-width:115px}.legend-row{font-size:8px}.zone-label{font-size:9px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.b-sc09 .main-name{font-size:10px}.b-sc09 .sub-name{font-size:8px}.sheet-status-pill{white-space:nowrap}.rights-note{font-size:11px;color:#637468;line-height:1.8;padding:0 2px 12px}.end-preview{background:#e8f3ec;color:#285c47;padding:10px 12px;border-radius:10px;font-size:12px;margin-bottom:12px}.legend-row{font-size:8px}.zone-label{font-size:9px}.sheet-pill{white-space:nowrap;font-size:10px}.sheet-top{gap:8px}
+.status-key{display:flex;justify-content:space-between;gap:5px;padding:10px 2px 14px}.status-key span{display:flex;align-items:center;gap:5px;font-size:10px;color:#66736c}.status-key i{width:7px;height:7px;border-radius:50%;display:inline-block}.green{background:#36a77c}.yellow{background:#c8ae45}.orange{background:#d58c4c}.red{background:#d4767b}.zone-block{border-width:1px;box-shadow:none}.status-green{background:#e7f1eb;border-color:#8cbaa0;color:#285c47}.status-yellow{background:#f6f1da;border-color:#d1bd70;color:#806720}.status-orange{background:#fbefdf;border-color:#dca26b;color:#a3632b}.status-red{background:#f5e8e7;border-color:#d69b9c;color:#a14d59}.zone-block.selected{outline:2px solid #285c47;outline-offset:3px}.activity-panel{margin:2px 18px 16px;padding:12px 14px 9px;background:#eef0e9;border-radius:16px;border:1px solid #e0e5db}.activity-head{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:600}.activity-head small,.latest-heading small{font-size:9px;font-weight:400;color:#7d897d;margin-left:5px}.activity-head button{background:transparent;border:0;color:#526d5a;font-size:10px;padding:6px;cursor:pointer}.activity-wheel{height:105px;position:relative;overflow:hidden;margin-top:5px}.activity-row{position:absolute;left:0;right:0;height:35px;display:flex;align-items:center;gap:8px;transition:transform .55s ease,opacity .55s ease;transform:translateY(35px);font-size:11px}.activity-row[data-slot="0"]{transform:translateY(0);opacity:.38}.activity-row[data-slot="1"]{transform:translateY(35px);opacity:1}.activity-row[data-slot="2"]{transform:translateY(70px);opacity:.38}.activity-row strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;font-weight:500}.activity-row em{font-size:10px;font-style:normal;color:#537360;white-space:nowrap}.activity-zone{background:#dce8dc;color:#285c47;padding:3px 7px;border-radius:7px;font-weight:600}.activity-foot{font-size:9px;color:#7d897d;text-align:right}.latest-card{background:#f1f4ed;border:1px solid #e0e6da;border-radius:12px;padding:12px;margin-bottom:14px}.latest-heading{font-size:11px;font-weight:600;margin-bottom:7px}#latest-person{font-size:14px;font-weight:600;color:#285c47}#latest-time{font-size:12px;color:#526854;margin:4px 0}.latest-card>small{font-size:9px;color:#798578}.user-pill{max-width:180px;font-size:10px}.bottom-sheet .confirm-note{font-size:10px}@media(prefers-reduced-motion:reduce){.activity-row{transition:none}}
+.secondary-action{background:#e7f1eb;color:#285c47;box-shadow:none;margin-bottom:9px}.danger-action{background:#b85862;box-shadow:none}.activity-empty{height:100%;display:grid;place-items:center;color:#7d897d;font-size:11px}.manage-help{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;padding:12px;background:#f3f7f4;border:1px solid #dbe6dd;border-radius:12px;color:#51675a}.manage-help strong{font-size:12px;color:#285c47}.manage-help span{font-size:11px;line-height:1.65}.manage-help small{font-size:9px;color:#7b857e}
+/* Clean map-first preview */
+.map-area{padding-top:12px}.status-key{padding:6px 2px 12px}.status-key span{font-size:11px;font-weight:600;color:#53635b}.rights-note{font-size:11px;color:#5f6d66;padding-bottom:14px}.map-heading{padding-bottom:12px;font-size:14px}.zone-name{font-size:15px;font-weight:800}.zone-remain{font-size:13px;font-weight:800}.zone-label{font-size:11px;font-weight:600}.b-sc09 .main-name{font-size:12px;font-weight:800}.b-sc09 .sub-name{font-size:9px;color:#53647a}.car-faculty-zone span,.roundabout-island{font-weight:600}
+.header-actions{display:flex;align-items:center;gap:7px}.theme-toggle{width:34px;height:34px;border-radius:50%;border:1px solid #dbe2df;background:#edf3ef;color:#294c3d;font-size:16px;cursor:pointer;display:grid;place-items:center}.location-note{margin:0 0 14px;padding:12px;border:1px solid #d5e1d9;border-radius:12px;background:#f2f7f3;color:#40574b}.location-note strong{display:block;font-size:12px;color:#244a39;margin-bottom:4px}.location-note span{display:block;font-size:10px;line-height:1.65}.location-status{margin-top:7px!important;font-weight:600}.location-status.ok{color:#047857}.location-status.bad{color:#b45309}.location-status.error{color:#be123c}
+html[data-theme="dark"]{color-scheme:dark;--bg-page:#0d1412;--bg-container:#121b18;--card-white:#18231f;--road-color:#283631;--building-bg:#263530;--building-border:#657b73;--text-main:#edf5f1;--text-sub:#a7bab1;--green-bg:#17352b;--green-border:#42bf91;--green-text:#a6efd2;--yellow-bg:#3a3217;--yellow-border:#d2b84c;--yellow-text:#f0dc8e;--orange-bg:#402819;--orange-border:#db9151;--orange-text:#f0bd8e;--red-bg:#3d2226;--red-border:#d77b83;--red-text:#f0a8ae}
+html[data-theme="dark"] body,html[data-theme="dark"] .app-wrapper,html[data-theme="dark"] header{background:#121b18;color:var(--text-main)}html[data-theme="dark"] header{border-color:#2a3933}html[data-theme="dark"] .brand-icon,html[data-theme="dark"] .theme-toggle,html[data-theme="dark"] .user-pill{background:#20302a;border-color:#34473f;color:#dcebe4}html[data-theme="dark"] .map-board{background:#17211e;border-color:#33463f}html[data-theme="dark"] .road,html[data-theme="dark"] .road-south-connect,html[data-theme="dark"] .roundabout-box{background:#2b3935}html[data-theme="dark"] .roundabout-island{background:#24312d;border-color:#80958c;color:#f0f6f3}html[data-theme="dark"] .b-sc09{background:#283630;border-color:#82978e}html[data-theme="dark"] .b-sc09 .main-name{color:#f2f7f5}html[data-theme="dark"] .b-sc09 .sub-name{color:#c7d6d0}html[data-theme="dark"] .car-faculty-zone{background:#202c28;border-color:#697e75;color:#f0f6f3}html[data-theme="dark"] .car-faculty-zone span{color:#d7e3de}html[data-theme="dark"] .bottom-sheet{background:#18231f;color:var(--text-main)}html[data-theme="dark"] .close-btn,html[data-theme="dark"] .btn-time-opt{background:#23312c;border-color:#3a4c45;color:#dfeae5}html[data-theme="dark"] .end-preview,html[data-theme="dark"] .latest-card,html[data-theme="dark"] .manage-help,html[data-theme="dark"] .location-note{background:#202e29;border-color:#354941;color:#c6d8d0}html[data-theme="dark"] .location-note strong{color:#bfe8d4}html[data-theme="dark"] .sheet-top+ .progress-track{background:#2b3a35}html[data-theme="dark"] #sheet-turnover{color:#b8c9c2}html[data-theme="dark"] .bottom-sheet>div[style*="background: #f8fafc"]{background:#202e29!important;border-color:#354941!important}html[data-theme="dark"] .status-key span{color:#bdcec6}html[data-theme="dark"] .toast{background:#e7f2ed;color:#15241e}
+</style>
+</head>
+<body>
+
+  <div class="app-wrapper">
+    <header>
+      <div class="header-top">
+        <div class="brand">
+          <div class="brand-icon">↳</div>
+          <div>
+            <h1>SC09 Parking</h1>
+            <span style="font-size: 0.68rem; color: var(--text-sub);">มหาวิทยาลัยขอนแก่น</span>
+          </div>
+        </div>
+        <div class="header-actions"><button type="button" class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="สลับโหมดสี">☾</button><div class="user-pill" id="user-display" onclick="changeNickname()">สุ่มชื่อ...</div></div>
+      </div>
+    </header>
+
+    <div class="map-area"><div class="status-key" aria-label="คำอธิบายสีการใช้งาน"><span><i class="green"></i>ว่างมาก</span><span><i class="yellow"></i>เริ่มแน่น</span><span><i class="orange"></i>ใกล้เต็ม</span><span><i class="red"></i>เต็มแล้ว</span></div>
+      <div class="map-heading"><span>สถานะที่จอดแต่ละโซน</span></div><div class="map-board">
+        <!-- ถนนฝั่งซ้ายตรงยาว เรียบคลีน -->
+        <div class="road road-west"></div>
+
+        <!-- ถนนแนวตั้งขวา ต่อทะลุลงมาติดถนนล่าง -->
+        <div class="road road-v"></div>
+        <div class="road-south-connect"></div>
+
+        <!-- วงเวียนกลับรถ ใต้ Zone B -->
+        <div class="roundabout-box">
+          <div class="roundabout-island">↺ วงเวียน</div>
+        </div>
+
+        <!-- อาคาร SC09 -->
+        <div class="b-sc09">
+          <div class="main-name">SC09 อาคารวิทยวิภาส</div>
+          <div class="sub-name">วิทย์ • วิทยาลัยการคอมพิวเตอร์</div>
+        </div>
+
+        <!-- ลานจอดรถยนต์ / อาจารย์ (ขวาบน) -->
+        <div class="car-faculty-zone">
+          <div style="font-size: 0.9rem; margin-bottom: 2px;">P</div>
+          <span>ลานรถยนต์<br>อาจารย์</span>
+        </div>
+
+        <!-- ติ่งรั้วกั้นทางเข้ามอเตอร์ไซค์ ขอบขวา Zone A -->
+        <div class="bike-gate-notch">
+          <div class="icon">↳</div>
+          <div class="label">เข้า</div>
+        </div>
+
+        <!-- 5 โซนจอดรถมอเตอร์ไซค์ -->
+        <button type="button" class="zone-block" id="zone-e" onclick="tapZone('E')">
+          <span class="zone-name">E</span>
+          <span class="zone-remain" id="count-e">...</span>
+        </button>
+
+        <button type="button" class="zone-block" id="zone-c" onclick="tapZone('C')">
+          <span class="zone-name">C</span>
+          <span class="zone-remain" id="count-c">...</span>
+        </button>
+
+        <button type="button" class="zone-block" id="zone-a" onclick="tapZone('A')">
+          <span class="zone-name">Zone A</span>
+          <span class="zone-remain" id="count-a">...</span>
+        </button>
+
+        <button type="button" class="zone-block" id="zone-b" onclick="tapZone('B')">
+          <span class="zone-name">Zone B</span>
+          <span class="zone-remain" id="count-b">...</span>
+        </button>
+
+        <button type="button" class="zone-block" id="zone-d" onclick="tapZone('D')">
+          <span class="zone-name">Zone D</span>
+          <span class="zone-remain" id="count-d">...</span>
+        </button>
+
+        <!-- กล่อง Legend อธิบายสถานะสี มุมล่างซ้าย -->
+
+      </div>
+    </div>
+
+    <!-- แถบลอยเตือนเวลาของฉัน -->
+    <div class="dock-badge" id="dock-badge" onclick="openMyDock()">
+      <div class="pulse-circle"></div>
+      <div><small>สิทธิ์ของฉัน · เวลาที่เหลือ</small><span id="dock-text"></span></div><span>ดูสิทธิ์ →</span>
+    </div>
+  </div>
+
+  <!-- Bottom Sheet -->
+  <div class="sheet-backdrop" id="sheet-backdrop" onclick="closeSheet()">
+    <div class="bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-zone-title" onclick="event.stopPropagation()">
+      <div class="sheet-drag"></div><button class="close-btn" style="float:right" onclick="closeSheet()" aria-label="ปิด">×</button>
+
+      <div class="sheet-top">
+        <div>
+          <div class="sheet-title" id="sheet-zone-title">Zone A</div>
+          <div style="font-size: 0.78rem; color: var(--text-sub);" id="sheet-zone-desc">...</div>
+        </div>
+        <div class="sheet-pill" id="sheet-status-pill">ว่าง</div>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-fill" id="sheet-prog-fill"></div>
+      </div>
+
+      <div style="background: #f8fafc; border: 1px solid #eef2f6; border-radius: 10px; padding: 10px; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 16px;">
+        <span id="sheet-turnover">ครบเวลาแล้วคืนสิทธิ์อัตโนมัติ</span>
+      </div>
+
+      <section class="latest-card"><div class="latest-heading">ผู้รับสิทธิ์ล่าสุดในโซนนี้ <small>ข้อมูลจริง</small></div><div id="latest-person"></div><div id="latest-time"></div><small>คนล่าสุดอาจไม่ใช่คนที่สิ้นสุดสิทธิ์ก่อน</small></section><div id="checkin-area"><div id="end-preview" class="end-preview"></div><p class="confirm-note">รับสิทธิ์เมื่อมาถึงโซนนี้ · 1 สิทธิ์ต่ออุปกรณ์<br>ครบเวลาแล้วระบบคืนสิทธิ์ โดยไม่ตรวจว่ารถออกจริงหรือไม่</p><div class="location-note"><strong>ทำไมต้องอนุญาตตำแหน่ง?</strong><span>ใช้ยืนยันว่าคุณอยู่ภายใน 500 เมตรจากพื้นที่ SC09 เฉพาะตอนรับสิทธิ์ ระบบไม่ติดตามต่อเนื่องและไม่บันทึกพิกัด</span><span id="location-status" class="location-status">ระบบจะขอตำแหน่งเมื่อกดยืนยัน</span></div>
+        <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 8px;">ระยะเวลาใช้สิทธิ์:</div>
+        <div class="time-selector">
+          <button type="button" class="btn-time-opt active" onclick="pickTime(1, this)">1 ชม.</button>
+          <button type="button" class="btn-time-opt" onclick="pickTime(3, this)">3 ชม.</button>
+          <button type="button" class="btn-time-opt" onclick="pickTime(6, this)">6 ชม.</button>
+        </div>
+        <button class="btn-submit" onclick="submitCheckin()">ยืนยันรับสิทธิ์จอด</button>
+      </div>
+
+      <div id="leave-area" style="display: none;">
+        <div class="manage-help">
+          <strong>เปิดสิทธิ์เดิมบนเครื่องอื่น</strong>
+          <span>คัดลอกลิงก์ด้านล่าง แล้วนำไปวางในช่องที่อยู่ของ Chrome หรือเบราว์เซอร์บนเครื่องนั้นได้เลย ไม่ต้องนำลิงก์ไปวางในหน้าเว็บนี้</span>
+          <small>ลิงก์นี้ใช้เปลี่ยนชื่อและคืนสิทธิ์ได้ กรุณาเก็บไว้เป็นส่วนตัว</small>
+        </div>
+        <button class="btn-submit secondary-action" onclick="copyManageLink()">คัดลอกลิงก์เปิดสิทธิ์เดิม</button><button class="btn-submit danger-action" onclick="submitLeave()">คืนสิทธิ์ก่อนเวลา</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+const API_URL='https://rwdxbyqjvuifbvznqakm.supabase.co';
+const API_KEY='sb_publishable_Z7-L9ebyiTeaCnlrxaLG0g_nCxY0jZ5';
+const SESSION_KEY='sc09_parking_session_v1', DEVICE_KEY='sc09_device_id_v1', NAME_KEY='sc09_preferred_name_v1', THEME_KEY='sc09_theme_v1';
+const GEOFENCE={latitude:16.474972,longitude:102.824836,radius:500,maxAccuracy:200};
+const zones={A:{name:'Zone A',capacity:140,occupied:0,desc:'ลานกลางบน ติดทางเข้ามอเตอร์ไซค์'},B:{name:'Zone B',capacity:200,occupied:0,desc:'ลานกลางล่าง เหนือวงเวียน'},C:{name:'Zone C',capacity:60,occupied:0,desc:'แนวยาวฝั่งซ้าย ข้างลาน A และ B'},D:{name:'Zone D',capacity:75,occupied:0,desc:'แถบขวายาว ขนานถนนหลัก'},E:{name:'Zone E',capacity:45,occupied:0,desc:'ข้างตึก SC09 ติดแนวกำแพง'}};
+let curZone=null,selectedDuration=1,session=null,lastFocus=null,events=[],wheelIndex=0,activityPaused=matchMedia('(prefers-reduced-motion: reduce)').matches,refreshing=false;
+function getLocal(k,f=null){try{const v=localStorage.getItem(k);return v===null?f:JSON.parse(v)}catch{return f}}
+function setLocal(k,v){try{v===null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v))}catch{}}
+let deviceId=getLocal(DEVICE_KEY);if(!deviceId){deviceId=crypto.randomUUID();setLocal(DEVICE_KEY,deviceId)}
+let preferredName=getLocal(NAME_KEY,'');
+async function rpc(name,body={}){const r=await fetch(`${API_URL}/rest/v1/rpc/${name}`,{method:'POST',headers:{apikey:API_KEY,Authorization:`Bearer ${API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json().catch(()=>null);if(!r.ok)throw new Error(data?.message||data?.details||'NETWORK_ERROR');return data}
+function saveSession(){setLocal(SESSION_KEY,session)}
+function vibratePhone(ms=25){try{navigator.vibrate?.(ms)}catch{}}
+function notify(msg){document.querySelector('.toast')?.remove();const el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.textContent=msg;document.body.append(el);setTimeout(()=>el.remove(),4500)}
+function apiMessage(e){const m=e?.message||'';if(m.includes('ACTIVE_RESERVATION_EXISTS'))return 'อุปกรณ์นี้มีสิทธิ์ที่ยังใช้งานอยู่';if(m.includes('ZONE_FULL'))return 'สิทธิ์โซนนี้หมดแล้ว';if(m.includes('NICKNAME_IN_USE'))return 'ชื่อเล่นนี้มีคนใช้แล้ว ลองชื่ออื่น';if(m.includes('INVALID_MANAGEMENT_LINK'))return 'ลิงก์จัดการสิทธิ์ไม่ถูกต้อง';if(m.includes('OUTSIDE_GEOFENCE'))return 'คุณอยู่นอกพื้นที่รับสิทธิ์ กรุณามาถึงบริเวณ SC09 ก่อน';if(m.includes('LOCATION_INACCURATE'))return 'ตำแหน่งยังคลาดเคลื่อนมาก กรุณาเปิด GPS แล้วลองอีกครั้ง';if(m.includes('LOCATION_REQUIRED'))return 'ต้องอนุญาตตำแหน่งก่อนรับสิทธิ์';return 'เชื่อมต่อไม่สำเร็จ กรุณาลองอีกครั้ง'}
+function applyTheme(theme,persist=true){document.documentElement.dataset.theme=theme;if(persist)localStorage.setItem(THEME_KEY,theme);document.getElementById('theme-toggle').textContent=theme==='dark'?'☀':'☾';document.querySelector('meta[name="theme-color"]').content=theme==='dark'?'#121b18':'#f6f5f1'}
+function toggleTheme(){applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark')}
+function setLocationStatus(text,type=''){const el=document.getElementById('location-status');el.textContent=text;el.className='location-status '+type}
+function distanceMeters(lat1,lon1,lat2,lon2){const r=6371000,toRad=x=>x*Math.PI/180,dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1),a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;return 2*r*Math.asin(Math.sqrt(a))}
+function getPosition(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(new Error('LOCATION_UNSUPPORTED'));navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:15000,maximumAge:0})})}
+function formatEnd(t){return new Intl.DateTimeFormat('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Asia/Bangkok'}).format(new Date(t))+' น. (ไทย)'}
+function status(z){const f=z.capacity-z.occupied;return f===0?['red','สิทธิ์หมด']:f/z.capacity<.2?['orange','สิทธิ์ใกล้หมด']:f/z.capacity<.45?['yellow','ยังมีสิทธิ์']:['green','สิทธิ์เหลือมาก']}
+function updateIdentity(){const el=document.getElementById('user-display');el.textContent=session?`${session.nickname} #${String(session.queue_number).padStart(3,'0')}`:(preferredName||'สุ่มชื่อเมื่อรับสิทธิ์')}
+async function changeNickname(){const n=prompt('แก้ชื่อเล่นได้ เลข # เป็นเลขที่ระบบกำหนด',session?.nickname||preferredName);if(!n?.trim())return;const clean=n.trim().replaceAll('#','').slice(0,40);try{if(session){const name=await rpc('sc09_rename',{p_reservation_id:session.reservation_id,p_manage_token:session.manage_token,p_nickname:clean});session.nickname=name;saveSession()}preferredName=clean;setLocal(NAME_KEY,preferredName);updateIdentity();await refreshData();notify('เปลี่ยนชื่อเล่นแล้ว')}catch(e){notify(apiMessage(e))}}
+function renderUI(){for(const[k,z]of Object.entries(zones)){const el=document.getElementById('zone-'+k.toLowerCase());el.className='zone-block status-'+status(z)[0]+(curZone===k?' selected':'');el.setAttribute('aria-label',`${z.name} ใช้สิทธิ์ ${z.occupied} จาก ${z.capacity}`);document.getElementById('count-'+k.toLowerCase()).textContent=`${z.occupied}/${z.capacity}`;let label=el.querySelector('.zone-label');if(!label){label=document.createElement('span');label.className='zone-label';el.append(label)}label.textContent=session?.zone_code===k?'สิทธิ์ของคุณ':(['A','B','D'].includes(k)?status(z)[1]:'')}}
+function renderActivity(){return}
+function rotateActivity(){if(activityPaused||document.hidden||document.getElementById('sheet-backdrop').classList.contains('active')||events.length<2)return;const rows=[...document.querySelectorAll('.activity-row')];wheelIndex=(wheelIndex+1)%rows.length;rows.forEach((r,i)=>r.dataset.slot=(i-wheelIndex+1+rows.length)%rows.length)}
+function toggleActivity(){activityPaused=!activityPaused;renderActivity()}
+function refreshLatest(){if(!curZone)return;const e=zones[curZone].latest;document.getElementById('latest-person').textContent=e?`${e.nickname} #${String(e.queue_number).padStart(3,'0')}`:'ยังไม่มีผู้ใช้สิทธิ์ในโซนนี้';document.getElementById('latest-time').textContent=!e?'':`เหลือ ${Math.max(1,Math.ceil((Date.parse(e.ends_at)-Date.now())/60000))} นาที · สิ้นสุด ${formatEnd(e.ends_at)}`}
+function updateEndPreview(){document.getElementById('end-preview').textContent='สิ้นสุดโดยประมาณ '+formatEnd(Date.now()+selectedDuration*3600000)}
+function refreshSheet(){if(!curZone)return;updateEndPreview();refreshLatest();const z=zones[curZone],[color,label]=status(z),free=z.capacity-z.occupied;document.getElementById('sheet-zone-title').textContent=z.name;document.getElementById('sheet-zone-desc').textContent=`${z.desc} · เหลือ ${free}/${z.capacity} สิทธิ์`;const pill=document.getElementById('sheet-status-pill');pill.textContent=label;pill.style.background=`var(--${color}-bg)`;pill.style.color=`var(--${color}-text)`;const fill=document.getElementById('sheet-prog-fill');fill.style.width=z.occupied/z.capacity*100+'%';fill.style.background=`var(--${color}-border)`;document.getElementById('sheet-turnover').textContent=session?.zone_code===curZone?`สิทธิ์ของคุณสิ้นสุด ${formatEnd(session.ends_at)} · คืนสิทธิ์ก่อนเวลาได้`:'ครบเวลาแล้วคืนสิทธิ์อัตโนมัติ ไม่ตรวจจับรถจริง';const mine=session?.zone_code===curZone;document.getElementById('checkin-area').style.display=mine?'none':'block';document.getElementById('leave-area').style.display=mine?'block':'none';const btn=document.querySelector('#checkin-area .btn-submit');btn.disabled=z.occupied>=z.capacity||!!session;btn.textContent=z.occupied>=z.capacity?'โซนนี้สิทธิ์หมด':session?'กรุณาคืนสิทธิ์เดิมก่อน':'ยืนยันรับสิทธิ์จอด'}
+function tapZone(k){if(!zones[k])return;vibratePhone();lastFocus=document.activeElement;curZone=k;selectedDuration=1;document.querySelectorAll('.btn-time-opt').forEach((b,i)=>b.classList.toggle('active',i===0));setLocationStatus('ระบบจะขอตำแหน่งเมื่อกดยืนยัน');renderUI();refreshSheet();document.getElementById('sheet-backdrop').classList.add('active');document.body.style.overflow='hidden';document.querySelector('.close-btn').focus()}
+function closeSheet(){document.getElementById('sheet-backdrop').classList.remove('active');document.body.style.overflow='';lastFocus?.focus()}
+function pickTime(h,b){selectedDuration=h;updateEndPreview();document.querySelectorAll('.btn-time-opt').forEach(x=>x.classList.toggle('active',x===b));vibratePhone()}
+async function submitCheckin(){if(!curZone||session||zones[curZone].occupied>=zones[curZone].capacity)return;const btn=document.querySelector('#checkin-area .btn-submit');btn.disabled=true;btn.textContent='กำลังตรวจตำแหน่ง…';setLocationStatus('กำลังขอตำแหน่งจากเครื่อง…');try{const pos=await getPosition(),{latitude,longitude,accuracy}=pos.coords,distance=distanceMeters(latitude,longitude,GEOFENCE.latitude,GEOFENCE.longitude);if(accuracy>GEOFENCE.maxAccuracy)throw new Error('LOCATION_INACCURATE');if(Math.max(0,distance-accuracy)>GEOFENCE.radius)throw new Error('OUTSIDE_GEOFENCE');setLocationStatus(`ยืนยันพื้นที่แล้ว · ห่างจุดกลางประมาณ ${Math.round(distance)} เมตร`,'ok');btn.textContent='กำลังรับสิทธิ์…';const rows=await rpc('sc09_reserve_nearby',{p_zone:curZone,p_duration_hours:selectedDuration,p_device_id:deviceId,p_latitude:latitude,p_longitude:longitude,p_accuracy_m:accuracy,p_nickname:preferredName||null});const r=rows[0];session={reservation_id:r.reservation_id,manage_token:r.manage_token,zone_code:r.zone_code,nickname:r.nickname,queue_number:r.queue_number,round_key:r.round_key,starts_at:r.starts_at,ends_at:r.ends_at};saveSession();preferredName=r.nickname;setLocal(NAME_KEY,preferredName);updateIdentity();vibratePhone(40);await refreshData();refreshSheet();notify(`รับสิทธิ์ Zone ${r.zone_code} #${String(r.queue_number).padStart(3,'0')} แล้ว · คัดลอกลิงก์ด้านล่างได้หากต้องการเปิดจากเครื่องอื่น`)}catch(e){let msg;if(e?.code===1)msg='กรุณาอนุญาตตำแหน่งในเบราว์เซอร์เพื่อรับสิทธิ์';else if(e?.code===2)msg='ไม่พบตำแหน่ง กรุณาเปิด GPS แล้วลองใหม่';else if(e?.code===3)msg='ตรวจตำแหน่งไม่ทัน กรุณาลองอีกครั้ง';else msg=apiMessage(e);setLocationStatus(msg,e?.message==='OUTSIDE_GEOFENCE'?'bad':'error');notify(msg);refreshSheet()}}
+async function submitLeave(){if(!session||!confirm(`คืนสิทธิ์ Zone ${session.zone_code} ตอนนี้?`))return;try{const ok=await rpc('sc09_release',{p_reservation_id:session.reservation_id,p_manage_token:session.manage_token});if(!ok)throw new Error('INVALID_MANAGEMENT_LINK');session=null;saveSession();closeSheet();updateIdentity();await refreshData();notify('คืนสิทธิ์แล้ว สามารถรับสิทธิ์ใหม่ได้')}catch(e){notify(apiMessage(e))}}
+async function copyManageLink(){if(!session)return;const u=new URL(location.origin+location.pathname);u.searchParams.set('manage',`${session.reservation_id}.${session.manage_token}`);try{await navigator.clipboard.writeText(u.href);notify('คัดลอกแล้ว · นำลิงก์ไปวางในช่องที่อยู่ของ Chrome หรือเบราว์เซอร์บนเครื่องอื่นได้เลย')}catch{prompt('คัดลอกลิงก์นี้ แล้ววางในช่องที่อยู่ของ Chrome หรือเบราว์เซอร์บนเครื่องอื่น',u.href)}}
+async function restoreSession(){const q=new URLSearchParams(location.search),manage=q.get('manage');let saved=getLocal(SESSION_KEY);if(manage){const dot=manage.indexOf('.');if(dot>0)saved={reservation_id:manage.slice(0,dot),manage_token:manage.slice(dot+1)};q.delete('manage');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))}if(!saved)return;try{const rows=await rpc('sc09_my_reservation',{p_reservation_id:saved.reservation_id,p_manage_token:saved.manage_token});const r=rows[0];if(r?.is_active){session={...saved,...r};saveSession()}else{session=null;saveSession()}}catch{session=null;saveSession()}}
+async function refreshData(){if(refreshing)return;refreshing=true;try{const snap=await rpc('sc09_snapshot');for(const z of snap.zones){Object.assign(zones[z.code],{name:z.name,capacity:z.capacity,occupied:z.active_count,desc:z.description,latest:z.latest})}events=snap.recent||[];renderUI();refreshLatest();refreshSheet()}catch(e){notify(apiMessage(e))}finally{refreshing=false}}
+function tick(){refreshLatest();if(session&&Date.parse(session.ends_at)<=Date.now()){session=null;saveSession();updateIdentity();refreshData();notify('สิทธิ์หมดอายุแล้ว ระบบคืนสิทธิ์เรียบร้อย')}const badge=document.getElementById('dock-badge');badge.style.display=session?'flex':'none';if(!session)return;const t=Math.max(0,Math.ceil((Date.parse(session.ends_at)-Date.now())/1000));document.getElementById('dock-text').textContent=`Zone ${session.zone_code} · ${[Math.floor(t/3600),Math.floor(t/60)%60,t%60].map(x=>String(x).padStart(2,'0')).join(':')}`}
+function openMyDock(){if(session)tapZone(session.zone_code)}
+document.addEventListener('keydown',e=>{if(!document.getElementById('sheet-backdrop').classList.contains('active'))return;if(e.key==='Escape')closeSheet();if(e.key==='Tab'){const items=[...document.querySelectorAll('.bottom-sheet button:not(:disabled)')].filter(x=>x.offsetParent!==null),first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshData()});window.addEventListener('storage',e=>{if(e.key===SESSION_KEY){session=getLocal(SESSION_KEY);updateIdentity();refreshData()}});setInterval(rotateActivity,5000);setInterval(tick,1000);setInterval(refreshData,10000);
+(async()=>{applyTheme(document.documentElement.dataset.theme||'light',false);const media=matchMedia('(prefers-color-scheme: dark)');media.addEventListener?.('change',e=>{if(!localStorage.getItem(THEME_KEY))applyTheme(e.matches?'dark':'light',false)});await restoreSession();updateIdentity();await refreshData();tick();const qrZone=new URLSearchParams(location.search).get('zone')?.toUpperCase();if(zones[qrZone])tapZone(qrZone);else if(qrZone)notify('ไม่พบโซนจาก QR นี้ กรุณาเลือกโซนบนแผนที่')})();
+
+  </script></body></html>
